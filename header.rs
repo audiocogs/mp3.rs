@@ -1,25 +1,10 @@
 use std::fmt;
 use std::bitflags;
 
-use std::io;
-use std::io::File;
-
-trait Peeker {
-  fn peek_be_u32(&mut self) -> io::IoResult<u32>;
-}
-
-impl<T: io::Reader + io::Seek> Peeker for T {
-  fn peek_be_u32(&mut self) -> io::IoResult<u32> {
-    let result = self.read_be_u32();
-
-    self.seek(-4, io::SeekCur);
-
-    return result;
-  }
-}
+use peeker::Peeker;
 
 #[deriving(Show)]
-enum MpegVersion {
+pub enum MpegVersion {
   MPEG1_0,
   MPEG2_0,
   MPEG2_5,
@@ -27,13 +12,12 @@ enum MpegVersion {
 }
 
 #[deriving(Show,PartialEq)]
-enum MpegLayer {
+pub enum MpegLayer {
   LayerI,
   LayerII,
   LayerIII,
   LayerReserved
 }
-
 
 fn new_mpeg_version(i: u32) -> MpegVersion {
   match i {
@@ -51,7 +35,7 @@ fn new_mpeg_bitrate(v: MpegVersion, l: MpegLayer, bits: u32) -> Option<u32> {
   if bits == 0 {
     return None; /* Free bitrate */
   }
-  
+
   if bits == 16 {
     return None;
   }
@@ -169,7 +153,7 @@ fn new_mpeg_frame_samples(v: MpegVersion, l: MpegLayer) -> Option<u32> {
 }
 
 bitflags!(
-  flags Header: u32 {
+  flags BinaryHeader: u32 {
     static Sync       = 0xffe00000,
     static Version    = 0x00180000,
     static Layer      = 0x00060000,
@@ -186,60 +170,73 @@ bitflags!(
   }
 )
 
-impl fmt::Show for Header {
-  fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-    let version = new_mpeg_version((self.bits & Version.bits) >> 19);
-    let layer = new_mpeg_layer((self.bits & Layer.bits) >> 17);
-    let bitrate = new_mpeg_bitrate(version, layer, (self.bits & Bitrate.bits) >> 12);
-    let samplerate = new_mpeg_samplerate(version, (self.bits & Samplerate.bits) >> 10);
-    let frame_samples = new_mpeg_frame_samples(version, layer);
-
-    let slot_size = if layer == LayerI { 4.0 } else { 1.0 };
-
-    let bps = 1000.0 * frame_samples.unwrap() as f64 / 8.0;
-    let fsize = bps * (bitrate.unwrap() as f64) / (samplerate.unwrap() as f64) + if self.contains(Padding) { slot_size } else { 0.0 };
-
-    return write!(fmt, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {}, length: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits, fsize as uint);
-  }
-}
-
 #[deriving(Show)]
-pub struct MpegFrame {
-  header: Header
+pub struct Header {
+  version: MpegVersion,
+  layer: MpegLayer,
+  crc: bool,
+  bitrate: Option<u32>,
+  samplerate: Option<u32>,
+  padding: bool,
+  private: bool,
+  channel: u32,
+  chanex: u32,
+  copyright: bool,
+  original: bool,
+  emphasis: u32
 }
 
-impl MpegFrame {
-  fn read_from(reader: &mut Peeker) -> Option<MpegFrame> {
+impl Header {
+  pub fn read_from(reader: &mut Peeker) -> Option<Header> {
     return match reader.peek_be_u32() {
-      Ok(v) => {
-        let h = Header { bits: v };
-
-        return if h.contains(Sync) { Some(MpegFrame { header: h }) } else { None };
-      },
+      Ok(v) => Header::from_binary(&BinaryHeader { bits: v }),
       Err(e) => None
     }
   }
-}
 
-fn main() {
-  let mut f = File::open(&Path::new("layer1/fl1.mp1"));
-
-  let mut i = 0i32;
-  let mut working = true;
-  let mut reader = f.unwrap();
-  
-  while working {
-    match MpegFrame::read_from(&mut reader) {
-      Some(h) => {
-        println!("{} at {}", h, i)
-
-        i += 300;
-        reader.seek(300, io::SeekCur);
-      }
-      None => {
-        i += 1;
-        reader.seek(1, io::SeekCur);
-      }
+  pub fn from_binary(bin: &BinaryHeader) -> Option<Header> {
+    if !bin.contains(Sync) {
+      return None;
     }
+
+    let version = new_mpeg_version((bin.bits & Version.bits) >> 19);
+    let layer = new_mpeg_layer((bin.bits & Layer.bits) >> 17);
+    let bitrate = new_mpeg_bitrate(version, layer, (bin.bits & Bitrate.bits) >> 12);
+    let samplerate = new_mpeg_samplerate(version, (bin.bits & Samplerate.bits) >> 10);
+    let frame_samples = new_mpeg_frame_samples(version, layer);
+
+    return Some(Header {
+      version: version,
+      layer: layer,
+      crc: bin.contains(CRC),
+      bitrate: bitrate,
+      samplerate: samplerate,
+      padding: bin.contains(Padding),
+      private: bin.contains(Private),
+      channel: (bin.bits & Channel.bits) >> 6,
+      chanex: (bin.bits & ChanEx.bits) >> 4,
+      copyright: bin.contains(Copyright),
+      original: bin.contains(Original),
+      emphasis: bin.bits & Original.bits
+    });
+  }
+
+  pub fn slot_size(&self) -> u32 {
+    return if self.layer == LayerI { 4 } else { 1 };
+  }
+
+  pub fn frame_samples(&self) -> Option<u32> {
+    return new_mpeg_frame_samples(self.version, self.layer);
+  }
+
+  pub fn frame_size(&self) -> Option<u32> {
+    let b = match self.bitrate { Some(v) => v as f64, None => return None };
+    let s = match self.samplerate { Some(v) => v as f64, None => return None };
+    let f = match self.frame_samples() { Some(v) => v as f64, None => return None };
+
+    let bps = 1000.0 * f as f64 / 8.0;
+    let size = bps * b / s + if self.padding { self.slot_size() as f64 } else { 0.0 };
+
+    return Some(size as u32);
   }
 }
