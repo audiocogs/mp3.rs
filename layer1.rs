@@ -32,13 +32,14 @@ static linear_table: [f64, ..14] = [
 
 
 
-pub fn decode_layer1(reader: &mut io::Reader) {
+pub fn decode_layer1(reader: &mut io::Reader) -> Vec<f64> {
   let mut bit_reader = bitreader::BitReader::new(reader);
   let nb_subbands = 32;
 
   let allocations = decode_bit_allocations(&mut bit_reader, nb_subbands);
   let scale_factors = decode_scale_factors(&mut bit_reader, nb_subbands, &allocations);
   let samples = decode_samples(&mut bit_reader, nb_subbands, &allocations, scale_factors);
+  samples
 }
 
 fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: uint) -> Vec<u32>{
@@ -47,6 +48,8 @@ fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: ui
 
   for i in range(0, nb_subbands) {
     let n = match bit_reader.read_bits(n_bits_to_read) {
+      Ok(0) => 0,
+      Ok(15) => 15,
       Ok(n) => n + 1,
       Err(_) => 0
     };
@@ -62,6 +65,7 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint
   let n_bits_to_read = 6;
 
   for i in range(0, nb_subbands) {
+    println!("length: {}", allocations.len());
     if allocations[i] != 0 {
       match bit_reader.read_bits(n_bits_to_read) {
         Ok(n) => scale_factors.push(n),
@@ -79,8 +83,13 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allo
 
   for i in range(0, nb_samples) {
     for j in range(0, nb_subbands) {
+      println!("length: {}", allocations.len());
       let allocation = allocations[j];
-      let sample = sample(bit_reader, allocation as uint) * scale_factors_table[scale_factors[j] as uint];
+      let sample = if allocation == 0 {
+        0f64
+      }else{
+        sample(bit_reader, allocation as uint) * scale_factors_table[scale_factors[j] as uint]
+      };
 
       samples.push(sample);
     }
