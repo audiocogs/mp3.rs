@@ -8,7 +8,7 @@ mod bitreader;
 mod layer1;
 
 fn main() {
-  let mut f = File::open(&Path::new("layer1/fl1.mp1"));
+  let f = File::open(&Path::new("layer1/fl1.mp1"));
 
   let mut i = 0i32;
   let mut working = true;
@@ -22,11 +22,11 @@ fn main() {
 
           let s = h.header.frame_size().unwrap();
           i += s as i32;
-          reader.seek(s as i64, io::SeekCur);
+          reader.seek(s as i64, io::SeekCur).unwrap();
         },
         None => {
           i += 1;
-          reader.seek(1, io::SeekCur);
+          reader.seek(1, io::SeekCur).unwrap();
         }
       },
       Err(e) =>  if e.kind == io::EndOfFile { working = false }

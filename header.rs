@@ -1,9 +1,11 @@
-use std::bitflags;
+#![allow(dead_code)]
+
 use std::io;
 
 use peeker::Peeker;
 
 #[deriving(Show)]
+#[allow(non_camel_case_types)]
 pub enum MpegVersion {
   MPEG1_0,
   MPEG2_0,
@@ -203,7 +205,6 @@ impl Header {
     let layer = new_mpeg_layer((bin.bits & Layer.bits) >> 17);
     let bitrate = new_mpeg_bitrate(version, layer, (bin.bits & Bitrate.bits) >> 12);
     let samplerate = new_mpeg_samplerate(version, (bin.bits & Samplerate.bits) >> 10);
-    let frame_samples = new_mpeg_frame_samples(version, layer);
 
     return Some(Header {
       version: version,
