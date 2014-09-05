@@ -154,19 +154,19 @@ fn new_mpeg_frame_samples(v: MpegVersion, l: MpegLayer) -> Option<u32> {
 
 bitflags!(
   flags BinaryHeader: u32 {
-    static Sync       = 0xffe00000,
-    static Version    = 0x00180000,
-    static Layer      = 0x00060000,
-    static CRC        = 0x00010000,
-    static Bitrate    = 0x0000f000,
-    static Samplerate = 0x00000c00,
-    static Padding    = 0x00000200,
-    static Private    = 0x00000100,
-    static Channel    = 0x000000c0,
-    static ChanEx     = 0x00000030,
-    static Copyright  = 0x00000008,
-    static Original   = 0x00000004,
-    static Emphasis   = 0x00000003
+    static Sync                 = 0xffe00000,
+    static Version              = 0x00180000,
+    static Layer                = 0x00060000,
+    static CRC                  = 0x00010000,
+    static Bitrate              = 0x0000f000,
+    static Samplerate           = 0x00000c00,
+    static Padding              = 0x00000200,
+    static Private              = 0x00000100,
+    static ChannelMode          = 0x000000c0,
+    static ChannelModeExtension = 0x00000030,
+    static Copyright            = 0x00000008,
+    static Original             = 0x00000004,
+    static Emphasis             = 0x00000003
   }
 )
 
@@ -179,8 +179,8 @@ pub struct Header {
   samplerate: Option<u32>,
   padding: bool,
   private: bool,
-  channel: u32,
-  chanex: u32,
+  channel_mode: u32,
+  channel_mode_extension: u32,
   copyright: bool,
   original: bool,
   emphasis: u32
@@ -213,8 +213,8 @@ impl Header {
       samplerate: samplerate,
       padding: bin.contains(Padding),
       private: bin.contains(Private),
-      channel: (bin.bits & Channel.bits) >> 6,
-      chanex: (bin.bits & ChanEx.bits) >> 4,
+      channel_mode: (bin.bits & ChannelMode.bits) >> 6,
+      channel_mode_extension: (bin.bits & ChannelModeExtension.bits) >> 4,
       copyright: bin.contains(Copyright),
       original: bin.contains(Original),
       emphasis: bin.bits & Original.bits
