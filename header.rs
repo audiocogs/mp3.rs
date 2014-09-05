@@ -1,4 +1,3 @@
-use std::fmt;
 use std::bitflags;
 
 use peeker::Peeker;
@@ -190,7 +189,7 @@ impl Header {
   pub fn read_from(reader: &mut Peeker) -> Option<Header> {
     return match reader.peek_be_u32() {
       Ok(v) => Header::from_binary(&BinaryHeader { bits: v }),
-      Err(e) => None
+      Err(_) => None
     }
   }
 
