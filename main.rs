@@ -1,3 +1,5 @@
+use std::os;
+
 use std::io;
 use std::io::File;
 
@@ -8,7 +10,7 @@ mod bitreader;
 mod layer1;
 
 fn main() {
-  let f = File::open(&Path::new("layer1/fl1.mp1"));
+  let f = File::open(&Path::new(os::args()[1].clone()));
 
   let mut i = 0i32;
   let mut working = true;
