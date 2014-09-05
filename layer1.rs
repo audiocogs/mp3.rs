@@ -38,30 +38,30 @@ pub fn decode_layer1(reader: &mut io::Reader) -> Vec<f64> {
 
   let allocations = decode_bit_allocations(&mut bit_reader, nb_subbands);
   let scale_factors = decode_scale_factors(&mut bit_reader, nb_subbands, &allocations);
-  let samples = decode_samples(&mut bit_reader, nb_subbands, &allocations, scale_factors);
+  let samples = decode_samples(&mut bit_reader, nb_subbands, &allocations, &scale_factors);
   samples
 }
 
-fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: uint) -> Vec<u32>{
-  let mut allocations = Vec::new();
+fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: uint) -> Box<[u32]>{
+  let mut allocations = box [0u32, ..32];
   let n_bits_to_read = 4;
 
   for i in range(0, nb_subbands) {
     let n = match bit_reader.read_bits(n_bits_to_read) {
       Ok(0) => 0,
-      Ok(15) => 15,
+      Ok(15) => fail!("illegal bit value"),
       Ok(n) => n + 1,
       Err(_) => 0
     };
 
-    allocations.push(n);
+    allocations[i] = n;
   }
 
   allocations
 }
 
-fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Vec<u32>) -> Vec<u32> {
-  let mut scale_factors = Vec::new();
+fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Box<[u32]>) -> Box<[u32]> {
+  let mut scale_factors = box [0u32, ..32];
   let n_bits_to_read = 6;
 
   for i in range(0, nb_subbands) {
@@ -71,13 +71,13 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint
         Err(_) => 0
       }
     }else{ 0 };
-    scale_factors.push(factor)
+    scale_factors[i] = factor;
   }
 
   scale_factors
 }
 
-fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Vec<u32>, scale_factors: Vec<u32>) -> Vec<f64> {
+fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Box<[u32]>, scale_factors: &Box<[u32]>) -> Vec<f64> {
   let mut samples = Vec::new();
   let nb_samples = 12i;
 
