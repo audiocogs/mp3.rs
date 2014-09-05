@@ -23,6 +23,10 @@ fn main() {
       }
       None => {
         i += 1;
+        match reader.read_be_u32() {
+            Ok(_) => {},
+            Err(_) => return
+        }
         reader.seek(1, io::SeekCur);
       }
     }
