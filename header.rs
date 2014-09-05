@@ -193,7 +193,13 @@ impl fmt::Show for Header {
     let bitrate = new_mpeg_bitrate(version, layer, (self.bits & Bitrate.bits) >> 12);
     let samplerate = new_mpeg_samplerate(version, (self.bits & Samplerate.bits) >> 10);
     let frame_samples = new_mpeg_frame_samples(version, layer);
-    return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits);
+
+    let b = bitrate.unwrap();
+    let f = frame_samples.unwrap();
+    let s = samplerate.unwrap();
+
+    let length = (f / 8u32) * b / s + 0;
+    return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {}, length: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits, length as uint);
   }
 }
 
