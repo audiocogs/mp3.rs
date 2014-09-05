@@ -26,7 +26,7 @@ enum MpegVersion {
   MPEGReserved
 }
 
-#[deriving(Show)]
+#[deriving(Show,PartialEq)]
 enum MpegLayer {
   LayerI,
   LayerII,
@@ -194,12 +194,12 @@ impl fmt::Show for Header {
     let samplerate = new_mpeg_samplerate(version, (self.bits & Samplerate.bits) >> 10);
     let frame_samples = new_mpeg_frame_samples(version, layer);
 
-    let b = bitrate.unwrap();
-    let f = frame_samples.unwrap();
-    let s = samplerate.unwrap();
+    let slot_size = if layer == LayerI { 4.0 } else { 1.0 };
 
-    let length = (f / 8u32) * b / s + 0;
-    return write!(fmt, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {}, length: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits, length as uint);
+    let bps = 1000.0 * frame_samples.unwrap() as f64 / 8.0;
+    let fsize = bps * (bitrate.unwrap() as f64) / (samplerate.unwrap() as f64) + if self.contains(Padding) { slot_size } else { 0.0 };
+
+    return write!(fmt, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {}, length: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits, fsize as uint);
   }
 }
 
