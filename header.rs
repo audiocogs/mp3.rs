@@ -10,15 +10,11 @@ trait Peeker {
 
 impl<T: io::Reader + io::Seek> Peeker for T {
   fn peek_be_u32(&mut self) -> io::IoResult<u32> {
-    match self.read_be_u32() {
-      Ok(v) => {
-        return Ok(v)
-      }
-      Err(e) => {
-        self.seek(-4, io::SeekCur);
-        return Err(e);
-      }
-    }
+    let result = self.read_be_u32();
+
+    self.seek(-4, io::SeekCur);
+
+    return result;
   }
 }
 
@@ -53,15 +49,33 @@ pub struct MpegFrame {
 
 impl MpegFrame {
   fn read_from(reader: &mut Peeker) -> Option<MpegFrame> {
-    match reader.peek_be_u32() {
-      Ok(v) => Some(MpegFrame { header: Header { bits: v }}),
-      Err(e) => return None
+    return match reader.peek_be_u32() {
+      Ok(v) => {
+        let h = Header { bits: v };
+
+        return if h.contains(Sync) { Some(MpegFrame { header: h }) } else { None };
+      },
+      Err(e) => None
     }
   }
 }
 
 fn main() {
-  let mut reader = File::open(&Path::new("layer1/fl1.mp1"));
+  let mut f = File::open(&Path::new("layer1/fl1.mp1"));
 
-  println!("{}", MpegFrame::read_from(&mut reader.unwrap()));
+  let mut i = 0i32;
+  let mut working = true;
+  let mut reader = f.unwrap();
+  
+  while working {
+    match MpegFrame::read_from(&mut reader) {
+      Some(h) => println!("{} at {}", h, i),
+      None => {}
+    }
+
+    match reader.read_u8() {
+      Ok(_) => i += 1, Err(_) => working = false
+    };
+  }
+  
 }
