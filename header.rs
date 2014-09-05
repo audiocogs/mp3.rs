@@ -18,6 +18,126 @@ impl<T: io::Reader + io::Seek> Peeker for T {
   }
 }
 
+#[deriving(Show)]
+enum MpegVersion {
+  MPEG1_0,
+  MPEG2_0,
+  MPEG2_5,
+  MPEGReserved
+}
+
+#[deriving(Show)]
+enum MpegLayer {
+  LayerI,
+  LayerII,
+  LayerIII,
+  LayerReserved
+}
+
+
+fn new_mpeg_version(i: u32) -> MpegVersion {
+  match i {
+    0x0 => MPEG2_5, 0x2 => MPEG2_0, 0x3 => MPEG1_0, _ => MPEGReserved
+  }
+}
+
+fn new_mpeg_layer(i: u32) -> MpegLayer {
+  match i {
+    0x3 => LayerI, 0x2 => LayerII, 0x1 => LayerIII, _ => LayerReserved
+  }
+}
+
+fn new_mpeg_bitrate(v: MpegVersion, l: MpegLayer, bits: u32) -> Option<u32> {
+  if bits == 0 {
+    return None; /* Free bitrate */
+  }
+  
+  if bits == 16 {
+    return None;
+  }
+
+  return Some(match v {
+    MPEG1_0 => {
+      match l {
+        LayerI => 32 * bits,
+        LayerII => match bits {
+          1 => 32,
+          2 => 48,
+          3 => 56,
+          4 => 64,
+          5 => 80,
+          6 => 96,
+          7 => 112,
+          8 => 128,
+          9 => 160,
+          10 => 192,
+          11 => 224,
+          12 => 256,
+          13 => 320,
+          14 => 384,
+          _ => return None
+        },
+        LayerIII => match bits {
+          1 => 32,
+          2 => 40,
+          3 => 48,
+          4 => 56,
+          5 => 64,
+          6 => 80,
+          7 => 96,
+          8 => 112,
+          9 => 128,
+          10 => 160,
+          11 => 192,
+          12 => 224,
+          13 => 256,
+          14 => 320,
+          _ => return None
+        },
+        _ => return None
+      }
+    }
+    MPEG2_0 | MPEG2_5 => match l {
+      LayerI => match bits {
+        1 => 32,
+        2 => 48,
+        3 => 56,
+        4 => 64,
+        5 => 80,
+        6 => 96,
+        7 => 112,
+        8 => 128,
+        9 => 144,
+        10 => 160,
+        11 => 176,
+        12 => 192,
+        13 => 224,
+        14 => 256,
+        _ => return None
+      },
+      LayerII | LayerIII => match bits {
+        1 => 8,
+        2 => 16,
+        3 => 24,
+        4 => 32,
+        5 => 40,
+        6 => 48,
+        7 => 56,
+        8 => 64,
+        9 => 80,
+        10 => 96,
+        11 => 112,
+        12 => 128,
+        13 => 144,
+        14 => 160,
+        _ => return None
+      },
+      _ => return None
+    },
+    _ => return None
+  })
+}
+
 bitflags!(
   flags Header: u32 {
     static Sync       = 0xffe00000,
@@ -38,7 +158,10 @@ bitflags!(
 
 impl fmt::Show for Header {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-     return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {} }}", self.contains(Sync), (self.bits & Version.bits) >> 19, (self.bits & Layer.bits) >> 17, self.contains(CRC), (self.bits & Bitrate.bits) >> 12, (self.bits & Samplerate.bits) >> 10, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits);
+    let version = new_mpeg_version((self.bits & Version.bits) >> 19);
+    let layer = new_mpeg_layer((self.bits & Layer.bits) >> 17);
+    let bitrate = new_mpeg_bitrate(version, layer, (self.bits & Bitrate.bits) >> 12);
+    return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, (self.bits & Samplerate.bits) >> 10, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits);
   }
 }
 
@@ -69,13 +192,16 @@ fn main() {
   
   while working {
     match MpegFrame::read_from(&mut reader) {
-      Some(h) => println!("{} at {}", h, i),
-      None => {}
-    }
+      Some(h) => {
+        println!("{} at {}", h, i)
 
-    match reader.read_u8() {
-      Ok(_) => i += 1, Err(_) => working = false
-    };
+        i += 300;
+        reader.seek(300, io::SeekCur);
+      }
+      None => {
+        i += 1;
+        reader.seek(1, io::SeekCur);
+      }
+    }
   }
-  
 }
