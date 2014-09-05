@@ -187,7 +187,7 @@ bitflags!(
 )
 
 impl fmt::Show for Header {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
     let version = new_mpeg_version((self.bits & Version.bits) >> 19);
     let layer = new_mpeg_layer((self.bits & Layer.bits) >> 17);
     let bitrate = new_mpeg_bitrate(version, layer, (self.bits & Bitrate.bits) >> 12);
@@ -199,7 +199,7 @@ impl fmt::Show for Header {
     let s = samplerate.unwrap();
 
     let length = (f / 8u32) * b / s + 0;
-    return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {}, length: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits, length as uint);
+    return write!(fmt, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {}, length: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits, length as uint);
   }
 }
 
