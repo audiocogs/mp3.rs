@@ -1,3 +1,5 @@
+use std::io;
+
 use peeker;
 use header;
 
@@ -7,10 +9,13 @@ pub struct MpegFrame {
 }
 
 impl MpegFrame {
-  pub fn read_from(reader: &mut peeker::Peeker) -> Option<MpegFrame> {
+  pub fn read_from(reader: &mut peeker::Peeker) -> io::IoResult<Option<MpegFrame>> {
     return match header::Header::read_from(reader) {
-      Some(h) => Some(MpegFrame { header: h }),
-      None => None
+      Ok(h) => match h {
+        Some(h) => Ok(Some(MpegFrame { header: h })),
+        None => Ok(None)
+      },
+      Err(e) => Err(e)
     }
   }
 }

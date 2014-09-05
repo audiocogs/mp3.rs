@@ -1,4 +1,5 @@
 use std::bitflags;
+use std::io;
 
 use peeker::Peeker;
 
@@ -186,10 +187,10 @@ pub struct Header {
 }
 
 impl Header {
-  pub fn read_from(reader: &mut Peeker) -> Option<Header> {
+  pub fn read_from(reader: &mut Peeker) -> io::IoResult<Option<Header>> {
     return match reader.peek_be_u32() {
-      Ok(v) => Header::from_binary(&BinaryHeader { bits: v }),
-      Err(_) => None
+      Ok(v) => Ok(Header::from_binary(&BinaryHeader { bits: v })),
+      Err(e) => Err(e)
     }
   }
 

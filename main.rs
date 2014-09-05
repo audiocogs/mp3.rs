@@ -14,21 +14,20 @@ fn main() {
   
   while working {
     match frame::MpegFrame::read_from(&mut reader) {
-      Some(h) => {
-        println!("{} at {}", h, i)
+      Ok(h) => match h {
+        Some(h) => {
+          println!("{} at {}", h, i);
 
-        let s = h.header.frame_size().unwrap();
-        i += s as i32;
-        reader.seek(s as i64, io::SeekCur);
-      }
-      None => {
-        i += 1;
-        match reader.read_be_u32() {
-            Ok(_) => {},
-            Err(_) => return
+          let s = h.header.frame_size().unwrap();
+          i += s as i32;
+          reader.seek(s as i64, io::SeekCur);
+        },
+        None => {
+          i += 1;
+          reader.seek(1, io::SeekCur);
         }
-        reader.seek(1, io::SeekCur);
-      }
+      },
+      Err(e) =>  if e.kind == io::EndOfFile { working = false }
     }
   }
 }
