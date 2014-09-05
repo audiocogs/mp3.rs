@@ -29,7 +29,7 @@ fn main() {
           reader.seek(s as i64, io::SeekCur).unwrap();
           let samples = layer1::decode_layer1(&mut reader);
           for sample in samples.iter() {
-              //out.write_be_f64(*sample);
+              out.write_be_f64(*sample);
           }
         },
         None => {

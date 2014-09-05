@@ -65,13 +65,13 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint
   let n_bits_to_read = 6;
 
   for i in range(0, nb_subbands) {
-    println!("length: {}", allocations.len());
-    if allocations[i] != 0 {
+    let factor = if allocations[i] != 0 {
       match bit_reader.read_bits(n_bits_to_read) {
-        Ok(n) => scale_factors.push(n),
-        Err(_) => ()
+        Ok(n) => n,
+        Err(_) => 0
       }
-    }
+    }else{ 0 };
+    scale_factors.push(factor)
   }
 
   scale_factors
@@ -83,7 +83,6 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allo
 
   for i in range(0, nb_samples) {
     for j in range(0, nb_subbands) {
-      println!("length: {}", allocations.len());
       let allocation = allocations[j];
       let sample = if allocation == 0 {
         0f64
