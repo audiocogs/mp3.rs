@@ -138,6 +138,36 @@ fn new_mpeg_bitrate(v: MpegVersion, l: MpegLayer, bits: u32) -> Option<u32> {
   })
 }
 
+fn new_mpeg_samplerate(v: MpegVersion, bits: u32) -> Option<u32> {
+  return Some(match v {
+    MPEG1_0 => match bits {
+      0 => 44100, 1 => 48000, 2 => 32000, _ => return None
+    },
+    MPEG2_0 => match bits {
+      0 => 22050, 1 => 24000, 2 => 16000, _ => return None
+    },
+    MPEG2_5 => match bits {
+      0 => 11025, 1 => 12000, 2 => 8000, _ => return None
+    },
+    _ => return None
+  });
+}
+
+fn new_mpeg_frame_samples(v: MpegVersion, l: MpegLayer) -> Option<u32> {
+  return Some(match v {
+    MPEG1_0 => match l {
+      LayerI => 384, LayerII => 1152, LayerIII => 1152, _ => return None
+    },
+    MPEG2_0 => match l {
+      LayerI => 384, LayerII => 1152, LayerIII => 576, _ => return None
+    },
+    MPEG2_5 => match l {
+      LayerI => 384, LayerII => 1152, LayerIII => 576, _ => return None
+    },
+    _ => return None
+  });
+}
+
 bitflags!(
   flags Header: u32 {
     static Sync       = 0xffe00000,
@@ -161,7 +191,9 @@ impl fmt::Show for Header {
     let version = new_mpeg_version((self.bits & Version.bits) >> 19);
     let layer = new_mpeg_layer((self.bits & Layer.bits) >> 17);
     let bitrate = new_mpeg_bitrate(version, layer, (self.bits & Bitrate.bits) >> 12);
-    return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, (self.bits & Samplerate.bits) >> 10, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits);
+    let samplerate = new_mpeg_samplerate(version, (self.bits & Samplerate.bits) >> 10);
+    let frame_samples = new_mpeg_frame_samples(version, layer);
+    return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, frame_samples: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {} }}", self.contains(Sync), version, layer, self.contains(CRC), bitrate, samplerate, frame_samples, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits);
   }
 }
 
