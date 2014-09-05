@@ -73,7 +73,7 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint
   scale_factors
 }
 
-fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Vec<u32>, scale_factors: Vec<u32>) {
+fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Vec<u32>, scale_factors: Vec<u32>) -> Vec<f64> {
   let mut samples = Vec::new();
   let nb_samples = 12i;
 
@@ -86,6 +86,7 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allo
     }
   }
 
+  samples
 }
 
 fn sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
