@@ -1,6 +1,6 @@
 use std::io;
 
-struct BitReader<'a> {
+pub struct BitReader<'a> {
   pub cache: u8, pub cache_length: uint, reader: &'a mut io::Reader + 'a
 }
 

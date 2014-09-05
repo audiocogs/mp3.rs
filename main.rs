@@ -4,6 +4,8 @@ use std::io::File;
 mod frame;
 mod header;
 mod peeker;
+mod bitreader;
+mod layer1;
 
 fn main() {
   let mut f = File::open(&Path::new("layer1/fl1.mp1"));
