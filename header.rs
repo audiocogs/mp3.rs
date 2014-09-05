@@ -42,7 +42,7 @@ bitflags!(
 
 impl fmt::Show for Header {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-     return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {} }}", self.contains(Sync), (self.bits & Version.bits) >> 19, (self.bits & Layer.bits) >> 17, self.contains(CRC), (self.bits & Bitrate.bits) >> 12);
+     return write!(f, "Header {{ sync: {}, version: {}, layer: {}, crc: {}, bitrate: {}, samplerate: {}, padding: {}, private: {}, channel_mode: {}, mode_extension: {}, copyright: {}, original: {}, emphasis: {} }}", self.contains(Sync), (self.bits & Version.bits) >> 19, (self.bits & Layer.bits) >> 17, self.contains(CRC), (self.bits & Bitrate.bits) >> 12, (self.bits & Samplerate.bits) >> 10, self.contains(Padding), self.contains(Private), (self.bits & Channel.bits) >> 6, (self.bits & ChanEx.bits) >> 4, self.contains(Copyright), self.contains(Original), self.bits & Emphasis.bits);
   }
 }
 
