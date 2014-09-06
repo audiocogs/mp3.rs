@@ -253,8 +253,8 @@ fn test_scale_factors() {
   assert_eq!(samples[1][23], 58);
   assert_eq!(samples[0][24], 56);
   assert_eq!(samples[1][24], 56);
-  assert_eq!(samples[0][25], 59);
-  assert_eq!(samples[1][25], 0);
+  assert_eq!(samples[0][25], 0);
+  assert_eq!(samples[1][25], 59);
   assert_eq!(samples[0][26], 0);
   assert_eq!(samples[1][26], 0);
   assert_eq!(samples[0][27], 0);
