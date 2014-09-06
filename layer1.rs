@@ -36,7 +36,7 @@ static linear_table: [f64, ..14] = [
 pub fn decode_layer1(reader: &mut io::Reader, frame_header: header::Header) -> Box<[[[f64, ..32], ..12], ..2]> {
   let mut bit_reader = bitreader::BitReader::new(reader);
   let nb_subbands = 32;
-  let num_channels = if(frame_header.channel_mode != 3){ 2 }else{ 1 };
+  let num_channels = if frame_header.channel_mode != 3 { 2 } else { 1 };
 
   let allocations = decode_bit_allocations(&mut bit_reader, nb_subbands, num_channels);
   let scale_factors = decode_scale_factors(&mut bit_reader, nb_subbands, num_channels, &allocations);
@@ -59,6 +59,12 @@ fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: ui
 
         allocations[chan][i] = n;
       }
+  }
+
+  for c in allocations.iter() {
+    for i in c.iter() {
+      println!("{}", i);
+    }
   }
 
   allocations
@@ -112,7 +118,7 @@ fn sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
       // invert most significant bit, and form a 2's complement sample
       sample ^= 1 << (nb - 1);
       sample |= -(sample & (1 << (nb - 1)));
-      sample /= (1 << (nb - 1));
+      sample /= 1 << (nb - 1);
 
       // requantize the sample
       // s'' = (2^nb / (2^nb - 1)) * (s''' + 2^(-nb + 1))

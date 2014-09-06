@@ -174,24 +174,33 @@ bitflags!(
 
 #[deriving(Show)]
 pub struct Header {
-  version: MpegVersion,
-  layer: MpegLayer,
-  crc: bool,
-  bitrate: Option<u32>,
-  samplerate: Option<u32>,
-  padding: bool,
-  private: bool,
-  channel_mode: u32,
-  channel_mode_extension: u32,
-  copyright: bool,
-  original: bool,
-  emphasis: u32
+  pub version: MpegVersion,
+  pub layer: MpegLayer,
+  pub crc: bool,
+  pub bitrate: Option<u32>,
+  pub samplerate: Option<u32>,
+  pub padding: bool,
+  pub private: bool,
+  pub channel_mode: u32,
+  pub channel_mode_extension: u32,
+  pub copyright: bool,
+  pub original: bool,
+  pub emphasis: u32
 }
 
 impl Header {
   pub fn read_from(reader: &mut Peeker) -> io::IoResult<Option<Header>> {
     return match reader.peek_be_u32() {
-      Ok(v) => Ok(Header::from_binary(&BinaryHeader { bits: v })),
+      Ok(v) => match Header::from_binary(&BinaryHeader { bits: v }) {
+        Some(s) => {
+          match reader.seek(4, io::SeekCur) {
+            Ok(()) => {}, Err(e) => return Err(e)
+          };
+
+          Ok(Some(s))
+        },
+        None => Ok(None)
+      },
       Err(e) => Err(e)
     }
   }

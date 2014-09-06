@@ -1,6 +1,6 @@
 use std::io;
 
-pub trait Peeker {
+pub trait Peeker : io::Seek + io::Reader {
   fn peek_be_u32(&mut self) -> io::IoResult<u32>;
 }
 
