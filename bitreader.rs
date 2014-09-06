@@ -17,8 +17,6 @@ impl<'a> BitReader<'a> {
     if n <= self.cache_length {
       let result = self.cache >> (self.cache_length - n);
 
-      println!("Cached {:x}/{}", self.cache, self.cache_length);
-
       self.cache_length -= n;
       self.cache = self.cache & (0xFF >> (8 - self.cache_length));
 
@@ -29,15 +27,11 @@ impl<'a> BitReader<'a> {
 
       let read = match self.reader.read_be_uint_n(b_to_read) { Ok(n) => n, Err(e) => return Err(e) };
 
-      let sum = ((self.cache << (b_to_read * 8)) as u64) | (read as u64);
-
-      println!("cached {:x}/{}/{:x}", self.cache, self.cache_length, sum);
+      let sum = ((self.cache as u64) << (b_to_read * 8)) | (read as u64);
 
       self.cache_length = b_to_read * 8 - n_to_read;
 
       let result = sum >> self.cache_length;
-
-      println!("result {:x}", result);
 
       self.cache = (sum & (0xFF >> (8 - self.cache_length))) as u8;
 
