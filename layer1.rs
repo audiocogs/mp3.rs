@@ -73,47 +73,44 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, num_subbands: uin
   return scale_factors;
 }
 
-fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, num_channels: uint, allocations: &Box<[[u32, ..32], ..2]>, scale_factors: &Box<[[u32, ..32], ..2]>) -> Box<[[[f64, ..32], ..12], ..2]> {
+fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint, allocations: &Box<[[u32, ..32], ..2]>, scale_factors: &Box<[[u32, ..32], ..2]>) -> Box<[[[f64, ..32], ..12], ..2]> {
   let mut samples = box [[[0f64, ..32], ..12], ..2];
-  let nb_samples = 12;
 
-  for chan in range(0, num_channels) {
-     for i in range(0, nb_samples) {
-        for j in range(0, nb_subbands) {
-          let allocation = allocations[chan][j];
-          let sample = if allocation == 0 {
-            0f64
-          }else{
-            sample(bit_reader, allocation as uint) * scale_factors_table[scale_factors[chan][j] as uint]
-          };
+  for sample in range(0, 12u) {
+    for subband in range(0, num_subbands) {
+      for channel in range(0, num_channels) {
+        let nb = allocations[channel][subband];
 
-          samples[chan][i][j] = sample;
-        }
+        samples[channel][sample][subband] = if nb > 0 {
+          calculate_sample(bit_reader, nb as uint) * scale_factors_table[scale_factors[channel][subband] as uint]
+        } else {
+          0.0
+        };
+      }
     }
   }
 
-  samples
+  return samples;
 }
 
-fn sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
+fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
   match bit_reader.read_bits(nb) {
     Ok(s) => {
-      let mut sample = s;
-      // invert most significant bit, and form a 2's complement sample
-      sample ^= 1 << (nb - 1);
-      sample |= -(sample & (1 << (nb - 1)));
-      sample /= 1 << (nb - 1);
+      let sample = (s as f64) / ((1u << nb) as f64) - 0.5;
 
-      // requantize the sample
-      // s'' = (2^nb / (2^nb - 1)) * (s''' + 2^(-nb + 1))
-      sample += 1 >> (nb - 1);
-      return (sample as f64) * linear_table[nb - 2];
+      let table = if nb == 0 {
+        linear_table[0]
+      } else {
+        linear_table[nb - 1]
+      };
+
+      return (sample as f64) * table;
     },
     Err(_) => 0.0
   }
-
 }
 
+#[cfg(test)]
 fn generate_test_allocations() -> Box<[[u32, ..32], ..2]> {
   let buf = [0xED, 0x99, 0x88, 0x88, 0x88, 0x88, 0x77, 0x77, 0x66, 0x77, 0x55, 0x66, 0x55, 0x55, 0x55, 0x55, 0x44, 0x44, 0x44, 0x33, 0x44, 0x22, 0x33, 0x22, 0x22, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
   let mut br = io::BufReader::new(buf);
