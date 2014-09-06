@@ -27,7 +27,7 @@ fn main() {
           let s = h.header.frame_size().unwrap();
           i += s as i32;
           reader.seek(s as i64, io::SeekCur).unwrap();
-          let samples = layer1::decode_layer1(&mut reader);
+          let samples = layer1::decode_layer1(&mut reader, h.header);
           for sample in samples.iter() {
               out.write_be_f32(*sample as f32);
           }

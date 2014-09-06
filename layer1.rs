@@ -1,6 +1,7 @@
 use std::io;
 
 use bitreader;
+use header;
 
 static scale_factors_table: [f64, ..64] = [
   2.000000000000, 1.587401051968, 1.259921049895, 1.000000000000,
@@ -32,65 +33,72 @@ static linear_table: [f64, ..14] = [
 
 
 
-pub fn decode_layer1(reader: &mut io::Reader) -> Vec<f64> {
+pub fn decode_layer1(reader: &mut io::Reader, frame_header: header::Header) -> Box<[[[f64, ..32], ..12], ..2]> {
   let mut bit_reader = bitreader::BitReader::new(reader);
   let nb_subbands = 32;
+  let num_channels = if(frame_header.channel_mode != 3){ 2 }else{ 1 };
 
-  let allocations = decode_bit_allocations(&mut bit_reader, nb_subbands);
-  let scale_factors = decode_scale_factors(&mut bit_reader, nb_subbands, &allocations);
-  let samples = decode_samples(&mut bit_reader, nb_subbands, &allocations, &scale_factors);
+  let allocations = decode_bit_allocations(&mut bit_reader, nb_subbands, num_channels);
+  let scale_factors = decode_scale_factors(&mut bit_reader, nb_subbands, num_channels, &allocations);
+  let samples = decode_samples(&mut bit_reader, nb_subbands, num_channels, &allocations, &scale_factors);
   samples
 }
 
-fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: uint) -> Box<[[u32, ..32], ..2]>{
+fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, num_channels: uint) -> Box<[[u32, ..32], ..2]>{
   let mut allocations = box [[0u32, ..32], ..2];
   let n_bits_to_read = 4;
 
-  for i in range(0, nb_subbands) {
-    let n = match bit_reader.read_bits(n_bits_to_read) {
-      Ok(0) => 0,
-      Ok(15) => fail!("illegal bit value"),
-      Ok(n) => n + 1,
-      Err(_) => 0
-    };
+  for chan in range(0, num_channels) {
+      for i in range(0, nb_subbands) {
+        let n = match bit_reader.read_bits(n_bits_to_read) {
+          Ok(0) => 0,
+          Ok(15) => fail!("illegal bit value"),
+          Ok(n) => n + 1,
+          Err(_) => 0
+        };
 
-    allocations[0][i] = n;
+        allocations[chan][i] = n;
+      }
   }
 
   allocations
 }
 
-fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Box<[[u32, ..32], ..2]>) -> Box<[[u32, ..32], ..2]> {
+fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, num_channels: uint, allocations: &Box<[[u32, ..32], ..2]>) -> Box<[[u32, ..32], ..2]> {
   let mut scale_factors = box [[0u32, ..32], ..2];
   let n_bits_to_read = 6;
 
-  for i in range(0, nb_subbands) {
-    let factor = if allocations[0][i] != 0 {
-      match bit_reader.read_bits(n_bits_to_read) {
-        Ok(n) => n,
-        Err(_) => 0
+  for chan in range(0, num_channels) {
+      for i in range(0, nb_subbands) {
+        let factor = if allocations[chan][i] != 0 {
+          match bit_reader.read_bits(n_bits_to_read) {
+            Ok(n) => n,
+            Err(_) => 0
+          }
+        }else{ 0 };
+        scale_factors[chan][i] = factor;
       }
-    }else{ 0 };
-    scale_factors[0][i] = factor;
   }
 
   scale_factors
 }
 
-fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, allocations: &Box<[[u32, ..32], ..2]>, scale_factors: &Box<[[u32, ..32], ..2]>) -> Vec<f64> {
-  let mut samples = Vec::new();
-  let nb_samples = 12i;
+fn decode_samples(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, num_channels: uint, allocations: &Box<[[u32, ..32], ..2]>, scale_factors: &Box<[[u32, ..32], ..2]>) -> Box<[[[f64, ..32], ..12], ..2]> {
+  let mut samples = box [[[0f64, ..32], ..12], ..2];
+  let nb_samples = 12;
 
-  for i in range(0, nb_samples) {
-    for j in range(0, nb_subbands) {
-      let allocation = allocations[0][j];
-      let sample = if allocation == 0 {
-        0f64
-      }else{
-        sample(bit_reader, allocation as uint) * scale_factors_table[scale_factors[0][j] as uint]
-      };
+  for chan in range(0, num_channels) {
+     for i in range(0, nb_samples) {
+        for j in range(0, nb_subbands) {
+          let allocation = allocations[chan][j];
+          let sample = if allocation == 0 {
+            0f64
+          }else{
+            sample(bit_reader, allocation as uint) * scale_factors_table[scale_factors[chan][j] as uint]
+          };
 
-      samples.push(sample);
+          samples[chan][i][j] = sample;
+        }
     }
   }
 
