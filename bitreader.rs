@@ -37,6 +37,8 @@ impl<'a> BitReader<'a> {
 
       let result = sum >> self.cache_length;
 
+      println!("result {:x}", result);
+
       self.cache = (sum & (0xFF >> (8 - self.cache_length))) as u8;
 
       return Ok(result as u32);
@@ -103,7 +105,7 @@ fn test_stream() {
 
 #[test]
 fn test_stream2() {
-  let buf = [0x30, 0xC8, 0x61, 0xA6, 0x9A, 0xAA];
+  let buf = [0x30, 0xC8, 0x61];
   let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
