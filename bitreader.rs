@@ -82,3 +82,17 @@ fn test_large_reads() {
 
   match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => fail!("Shouldn't be here!") };
 }
+
+#[test]
+fn test_stream() {
+  let buf = [0xEA, 0xBD, 0x21];
+  let mut br = io::BufReader::new(buf);
+  let mut r = BitReader::new(&mut br);
+
+  assert_eq!(r.read_bits(4).unwrap(), 0xE);
+  assert_eq!(r.read_bits(4).unwrap(), 0xA);
+  assert_eq!(r.read_bits(4).unwrap(), 0xB);
+  assert_eq!(r.read_bits(4).unwrap(), 0xD);
+  assert_eq!(r.read_bits(4).unwrap(), 0x2);
+  assert_eq!(r.read_bits(4).unwrap(), 0x1);
+}

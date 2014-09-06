@@ -20,8 +20,6 @@ fn main() {
       Ok(h) => match h {
         Some(h) => {
           let s = h.header.frame_size().unwrap();
-          println!("{}", reader.tell());
-          reader.seek(s as i64, io::SeekCur).unwrap();
           let samples = layer1::decode_layer1(&mut reader, h.header);
         },
         None => {

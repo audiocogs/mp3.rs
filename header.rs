@@ -193,7 +193,7 @@ impl Header {
     return match reader.peek_be_u32() {
       Ok(v) => match Header::from_binary(&BinaryHeader { bits: v }) {
         Some(s) => {
-          match reader.seek(4, io::SeekCur) {
+          match reader.seek(if s.crc { 6 } else { 4 }, io::SeekCur) {
             Ok(()) => {}, Err(e) => return Err(e)
           };
 
@@ -218,7 +218,7 @@ impl Header {
     return Some(Header {
       version: version,
       layer: layer,
-      crc: bin.contains(CRC),
+      crc: !bin.contains(CRC),
       bitrate: bitrate,
       samplerate: samplerate,
       padding: bin.contains(Padding),

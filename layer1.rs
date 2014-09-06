@@ -33,7 +33,7 @@ static linear_table: [f64, ..14] = [
 
 
 
-pub fn decode_layer1(reader: &mut io::Reader, frame_header: header::Header) -> Box<[[[f64, ..32], ..12], ..2]> {
+pub fn decode_layer1(reader: &mut io::fs::File, frame_header: header::Header) -> Box<[[[f64, ..32], ..12], ..2]> {
   let mut bit_reader = bitreader::BitReader::new(reader);
   let nb_subbands = 32;
   let num_channels = if frame_header.channel_mode != 3 { 2 } else { 1 };
@@ -41,33 +41,31 @@ pub fn decode_layer1(reader: &mut io::Reader, frame_header: header::Header) -> B
   let allocations = decode_bit_allocations(&mut bit_reader, nb_subbands, num_channels);
   let scale_factors = decode_scale_factors(&mut bit_reader, nb_subbands, num_channels, &allocations);
   let samples = decode_samples(&mut bit_reader, nb_subbands, num_channels, &allocations, &scale_factors);
+
   samples
 }
 
-fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, num_channels: uint) -> Box<[[u32, ..32], ..2]>{
+fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint) -> Box<[[u32, ..32], ..2]>{
   let mut allocations = box [[0u32, ..32], ..2];
-  let n_bits_to_read = 4;
 
-  for chan in range(0, num_channels) {
-      for i in range(0, nb_subbands) {
-        let n = match bit_reader.read_bits(n_bits_to_read) {
-          Ok(0) => 0,
-          Ok(15) => fail!("illegal bit value"),
-          Ok(n) => n + 1,
-          Err(_) => 0
-        };
+  for subband in range(0, num_subbands) {
+    for channel in range(0, num_channels) {
+      let g = bit_reader.read_bits(4);
 
-        allocations[chan][i] = n;
-      }
-  }
+      let n = match g {
+        Ok(0) => 0,
+        Ok(15) => fail!("illegal bit value"),
+        Ok(n) => n + 1,
+        Err(_) => fail!("illegal bitz value")
+      };
 
-  for c in allocations.iter() {
-    for i in c.iter() {
-      println!("{}", i);
+      println!("{:x}", g.unwrap());
+
+      allocations[channel][subband] = n;
     }
   }
 
-  allocations
+  return allocations;
 }
 
 fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, nb_subbands: uint, num_channels: uint, allocations: &Box<[[u32, ..32], ..2]>) -> Box<[[u32, ..32], ..2]> {
