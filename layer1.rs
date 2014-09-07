@@ -22,8 +22,7 @@ static scale_factors_table: [f64, ..64] = [
   0.000001907349, 0.000001513864, 0.000001201554, 0.000000000000
 ];
 
-// linear scaling table
-static linear_table: [f64, ..14] = [
+static linear_scaling_table: [f64, ..14] = [
   1.33333333333333, 1.14285714285714, 1.06666666666667,
   1.03225806451613, 1.01587301587302, 1.00787401574803,
   1.00392156862745, 1.00195694716243, 1.00097751710655,
@@ -99,9 +98,9 @@ fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
       let sample = (s as f64) / ((1u << nb) as f64) - 0.5;
 
       let table = if nb == 0 {
-        linear_table[0]
+        linear_scaling_table[0]
       } else {
-        linear_table[nb - 1]
+        linear_scaling_table[nb - 1]
       };
 
       return (sample as f64) * table;
