@@ -1,0 +1,5 @@
+[package]
+
+name = "mp3"
+version = "0.0.1"
+authors = ["Jens Nockert", "Dimiter Petrov", "Johan Hoffman"]
