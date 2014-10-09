@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(non_uppercase_statics)]
 
 use std::io;
 

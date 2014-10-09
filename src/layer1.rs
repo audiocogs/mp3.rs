@@ -3,7 +3,7 @@ use std::io;
 use bitreader;
 use header;
 
-static scale_factors_table: [f64, ..64] = [
+static SCALE_FACTORS_TABLE: [f64, ..64] = [
   2.000000000000, 1.587401051968, 1.259921049895, 1.000000000000,
   0.793700525984, 0.629960524947, 0.500000000000, 0.396850262992,
   0.314980262474, 0.250000000000, 0.198425131496, 0.157490131237,
@@ -22,7 +22,7 @@ static scale_factors_table: [f64, ..64] = [
   0.000001907349, 0.000001513864, 0.000001201554, 0.000000000000
 ];
 
-static linear_scaling_table: [f64, ..14] = [
+static LINEAR_SCALING_TABLE: [f64, ..14] = [
   1.33333333333333, 1.14285714285714, 1.06666666666667,
   1.03225806451613, 1.01587301587302, 1.00787401574803,
   1.00392156862745, 1.00195694716243, 1.00097751710655,
@@ -81,7 +81,7 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num
         let nb = allocations[channel][subband];
 
         samples[channel][sample][subband] = if nb > 0 {
-          calculate_sample(bit_reader, nb as uint) * scale_factors_table[scale_factors[channel][subband] as uint]
+          calculate_sample(bit_reader, nb as uint) * SCALE_FACTORS_TABLE[scale_factors[channel][subband] as uint]
         } else {
           0.0
         };
@@ -98,9 +98,9 @@ fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
       let sample = (s as f64) / ((1u << nb) as f64) - 0.5;
 
       let table = if nb == 0 {
-        linear_scaling_table[0]
+        LINEAR_SCALING_TABLE[0]
       } else {
-        linear_scaling_table[nb - 1]
+        LINEAR_SCALING_TABLE[nb - 1]
       };
 
       return (sample as f64) * table;
