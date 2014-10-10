@@ -157,19 +157,19 @@ fn new_mpeg_frame_samples(v: MpegVersion, l: MpegLayer) -> Option<u32> {
 
 bitflags!(
   flags BinaryHeader: u32 {
-    static Sync                 = 0xffe00000,
-    static Version              = 0x00180000,
-    static Layer                = 0x00060000,
-    static CRC                  = 0x00010000,
-    static Bitrate              = 0x0000f000,
-    static Samplerate           = 0x00000c00,
-    static Padding              = 0x00000200,
-    static Private              = 0x00000100,
-    static ChannelMode          = 0x000000c0,
-    static ChannelModeExtension = 0x00000030,
-    static Copyright            = 0x00000008,
-    static Original             = 0x00000004,
-    static Emphasis             = 0x00000003
+    const Sync                 = 0xffe00000,
+    const Version              = 0x00180000,
+    const Layer                = 0x00060000,
+    const CRC                  = 0x00010000,
+    const Bitrate              = 0x0000f000,
+    const Samplerate           = 0x00000c00,
+    const Padding              = 0x00000200,
+    const Private              = 0x00000100,
+    const ChannelMode          = 0x000000c0,
+    const ChannelModeExtension = 0x00000030,
+    const Copyright            = 0x00000008,
+    const Original             = 0x00000004,
+    const Emphasis             = 0x00000003
   }
 )
 
