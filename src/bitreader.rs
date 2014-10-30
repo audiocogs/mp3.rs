@@ -11,7 +11,7 @@ impl<'a> BitReader<'a> {
 
   pub fn read_bits(&mut self, n: uint) -> io::IoResult<u32> {
     if n > 32 {
-      fail!("You cannot request more than 32 bits into a u32");
+      panic!("You cannot request more than 32 bits into a u32");
     }
 
     if n <= self.cache_length {
@@ -55,7 +55,7 @@ fn test_short_reads() {
   assert_eq!(r.read_bits(3).unwrap(), 0x01);
   assert_eq!(r.read_bits(2).unwrap(), 0x00);
 
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => fail!("Shouldn't be here!") };
+  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
@@ -68,7 +68,7 @@ fn test_medium_reads() {
   assert_eq!(r.read_bits(12).unwrap(), 0x44A);
   assert_eq!(r.read_bits(4).unwrap(), 0x3);
 
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => fail!("Shouldn't be here!") };
+  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn test_large_reads() {
   assert_eq!(r.read_bits(24).unwrap(), 0xFFAA44);
   assert_eq!(r.read_bits(32).unwrap(), 0xA3349944);
 
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => fail!("Shouldn't be here!") };
+  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
