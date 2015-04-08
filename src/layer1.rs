@@ -75,7 +75,7 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, num_subbands: uin
 fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint, allocations: &Box<[[u32; 32]; 2]>, scale_factors: &Box<[[u32; 32]; 2]>) -> Box<[[[f64; 32]; 12]; 2]> {
   let mut samples = box [[[0f64; 32]; 12]; 2];
 
-  for sample in range(0, 12u) {
+  for sample in range(0, 12u32) {
     for subband in range(0, num_subbands) {
       for channel in range(0, num_channels) {
         let nb = allocations[channel][subband];
@@ -95,7 +95,7 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num
 fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
   match bit_reader.read_bits(nb) {
     Ok(s) => {
-      let sample = (s as f64) / ((1u << nb) as f64) - 0.5;
+      let sample = (s as f64) / ((1u64 << nb) as f64) - 0.5;
 
       let table = if nb == 0 {
         LINEAR_SCALING_TABLE[0]
