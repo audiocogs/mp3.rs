@@ -95,7 +95,7 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num
 fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
   match bit_reader.read_bits(nb) {
     Ok(s) => {
-      let sample = (s as f64) / ((1u << nb) as f64) - 0.5;
+      let sample = (s as f64) / ((1u64 << nb) as f64) - 0.5;
 
       let table = if nb == 0 {
         LINEAR_SCALING_TABLE[0]
