@@ -155,7 +155,7 @@ fn new_mpeg_frame_samples(v: MpegVersion, l: MpegLayer) -> Option<u32> {
   });
 }
 
-bitflags!(
+bitflags! {
   flags BinaryHeader: u32 {
     const Sync                 = 0xffe00000,
     const Version              = 0x00180000,
@@ -171,7 +171,7 @@ bitflags!(
     const Original             = 0x00000004,
     const Emphasis             = 0x00000003
   }
-)
+}
 
 #[deriving(Show)]
 pub struct Header {
