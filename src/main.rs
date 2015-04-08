@@ -3,6 +3,9 @@ use std::os;
 use std::io;
 use std::io::File;
 
+#[macro_use]
+extern crate bitflags;
+
 mod frame;
 mod header;
 mod peeker;
