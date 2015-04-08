@@ -45,7 +45,7 @@ pub fn decode_layer1(reader: &mut io::fs::File, frame_header: header::Header) ->
 }
 
 fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint) -> Box<[[u32; 32]; 2]> {
-  let mut allocations = box [[0u32; 32]; 2];
+  let mut allocations = Box::new([[0u32; 32]; 2]);
 
   for subband in 0..num_subbands {
     for channel in 0..num_channels {
@@ -59,7 +59,7 @@ fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, num_subbands: u
 }
 
 fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint, allocations: &Box<[[u32; 32]; 2]>) -> Box<[[u32; 32]; 2]> {
-  let mut scale_factors = box [[0u32; 32]; 2];
+  let mut scale_factors = Box::new([[0u32; 32]; 2]);
 
   for subband in 0..num_subbands {
     for channel in 0..num_channels {
@@ -73,7 +73,7 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, num_subbands: uin
 }
 
 fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint, allocations: &Box<[[u32; 32]; 2]>, scale_factors: &Box<[[u32; 32]; 2]>) -> Box<[[[f64; 32]; 12]; 2]> {
-  let mut samples = box [[[0f64; 32]; 12]; 2];
+  let mut samples = Box::new([[[0f64; 32]; 12]; 2]);
 
   for sample in 0..12 {
     for subband in 0..num_subbands {
