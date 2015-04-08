@@ -3,7 +3,7 @@ use std::io;
 use peeker;
 use header;
 
-#[deriving(Show)]
+#[derive(Debug)]
 pub struct MpegFrame {
   pub header: header::Header
 }

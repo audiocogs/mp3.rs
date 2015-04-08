@@ -5,7 +5,7 @@ use std::io;
 
 use peeker::Peeker;
 
-#[deriving(Show)]
+#[derive(Debug)]
 #[allow(non_camel_case_types)]
 pub enum MpegVersion {
   MPEG1_0,
@@ -14,7 +14,7 @@ pub enum MpegVersion {
   MPEGReserved
 }
 
-#[deriving(Show,PartialEq)]
+#[derive(Debug,PartialEq)]
 pub enum MpegLayer {
   LayerI,
   LayerII,
@@ -173,7 +173,7 @@ bitflags! {
   }
 }
 
-#[deriving(Show)]
+#[derive(Debug)]
 pub struct Header {
   pub version: MpegVersion,
   pub layer: MpegLayer,
