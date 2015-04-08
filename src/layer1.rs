@@ -95,7 +95,7 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num
 fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
   match bit_reader.read_bits(nb) {
     Ok(s) => {
-      let sample = (s as f64) / ((1u << nb) as f64) - 0.5;
+      let sample = (s as f64) / ((1u64 << nb) as f64) - 0.5;
 
       let table = if nb == 0 {
         LINEAR_SCALING_TABLE[0]
@@ -154,7 +154,7 @@ fn test_bit_allocations() {
   assert_eq!(samples[0][29], 0x0);
   assert_eq!(samples[0][30], 0x0);
   assert_eq!(samples[0][31], 0x0);
-  
+
   assert_eq!(samples[1][0], 0xD);
   assert_eq!(samples[1][1], 0x9);
   assert_eq!(samples[1][2], 0x8);
@@ -192,7 +192,7 @@ fn test_bit_allocations() {
 #[test]
 fn test_scale_factors() {
   let allocations = generate_test_allocations();
-  
+
   let buf = [0x30, 0xC8, 0x61, 0xA6, 0x9A, 0xAA, 0xBA, 0xEB, 0x6D, 0xCB, 0x2C, 0x30, 0xD3, 0x4C, 0xB2, 0xDB, 0x6D, 0x34, 0xE3, 0x8D, 0x75, 0xDF, 0x7D, 0xF7, 0xDF, 0x7E, 0x79, 0xDF, 0x7E, 0xBA, 0xDF, 0x7E, 0xBA, 0xE3, 0x8E, 0xBA, 0xE3, 0x8E, 0xDF, 0xFF, 0xBF, 0xFE, 0xFF, 0xBF, 0xEF, 0xF7, 0xFB, 0xFD];
   let mut br = io::BufReader::new(buf);
   let mut r = bitreader::BitReader::new(&mut br);
