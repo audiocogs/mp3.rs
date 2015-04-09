@@ -1,7 +1,9 @@
 use std::io;
 
 pub struct BitReader<'a> {
-  pub cache: u8, pub cache_length: uint, reader: &'a mut io::Reader + 'a
+  pub cache: u8,
+  pub cache_length: u32,
+  reader: &'a mut (old_io::Reader + 'a)
 }
 
 impl<'a> BitReader<'a> {
