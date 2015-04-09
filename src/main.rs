@@ -3,6 +3,7 @@ use std::env;
 use std::path::Path;
 use std::old_io;
 use std::old_io::File;
+use std::old_io::Seek;
 
 #[macro_use]
 extern crate bitflags;
