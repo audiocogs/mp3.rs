@@ -1,7 +1,8 @@
 use std::os;
-
-use std::io;
-use std::io::File;
+use std::env;
+use std::path::Path;
+use std::old_io;
+use std::old_io::File;
 
 #[macro_use]
 extern crate bitflags;
@@ -13,7 +14,7 @@ mod bitreader;
 mod layer1;
 
 fn main() {
-  let f = File::open(&Path::new(os::args()[1].clone()));
+  let f = File::open(&Path::new(env::args()[1].clone()));
 
   let mut working = true;
   let mut reader = f.unwrap();
@@ -33,10 +34,10 @@ fn main() {
           // }
         },
         None => {
-          reader.seek(1, io::SeekCur).unwrap();
+          reader.seek(1, old_io::SeekCur).unwrap();
         }
       },
-      Err(e) =>  if e.kind == io::EndOfFile { working = false }
+      Err(e) =>  if e.kind == old_io::EndOfFile { working = false }
     }
   }
 }
