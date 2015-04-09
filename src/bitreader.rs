@@ -1,7 +1,7 @@
 use std::io;
 
 pub struct BitReader<'a> {
-  pub cache: u8, pub cache_length: uint, reader: &'a mut io::Reader + 'a
+  pub cache: u8, pub cache_length: u32, reader: &'a mut io::Reader + 'a
 }
 
 impl<'a> BitReader<'a> {
@@ -9,7 +9,7 @@ impl<'a> BitReader<'a> {
     return BitReader { cache: 0, cache_length: 0, reader: reader };
   }
 
-  pub fn read_bits(&mut self, n: uint) -> io::IoResult<u32> {
+  pub fn read_bits(&mut self, n: u32) -> io::IoResult<u32> {
     if n > 32 {
       panic!("You cannot request more than 32 bits into a u32");
     }
