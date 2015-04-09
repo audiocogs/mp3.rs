@@ -27,7 +27,7 @@ impl<'a> BitReader<'a> {
       let n_to_read = n - self.cache_length;
       let b_to_read = n_to_read / 8 + if n_to_read % 8 > 0 { 1 } else { 0 };
 
-      let read = match self.reader.read_be_uint_n(b_to_read) { Ok(n) => n, Err(e) => return Err(e) };
+      let read = match self.reader.read_be_uint_n(b_to_read as usize) { Ok(n) => n, Err(e) => return Err(e) };
 
       let sum = ((self.cache as u64) << (b_to_read * 8)) | (read as u64);
 

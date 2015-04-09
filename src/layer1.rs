@@ -44,7 +44,7 @@ pub fn decode_layer1(reader: &mut old_io::fs::File, frame_header: header::Header
   samples
 }
 
-fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint) -> Box<[[u32; 32]; 2]> {
+fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, num_subbands: usize, num_channels: usize) -> Box<[[u32; 32]; 2]> {
   let mut allocations = Box::new([[0u32; 32]; 2]);
 
   for subband in 0..num_subbands {
@@ -58,7 +58,7 @@ fn decode_bit_allocations(bit_reader: &mut bitreader::BitReader, num_subbands: u
   return allocations;
 }
 
-fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint, allocations: &Box<[[u32; 32]; 2]>) -> Box<[[u32; 32]; 2]> {
+fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, num_subbands: usize, num_channels: usize, allocations: &Box<[[u32; 32]; 2]>) -> Box<[[u32; 32]; 2]> {
   let mut scale_factors = Box::new([[0u32; 32]; 2]);
 
   for subband in 0..num_subbands {
@@ -72,7 +72,7 @@ fn decode_scale_factors(bit_reader: &mut bitreader::BitReader, num_subbands: uin
   return scale_factors;
 }
 
-fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num_channels: uint, allocations: &Box<[[u32; 32]; 2]>, scale_factors: &Box<[[u32; 32]; 2]>) -> Box<[[[f64; 32]; 12]; 2]> {
+fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: usize, num_channels: usize, allocations: &Box<[[u32; 32]; 2]>, scale_factors: &Box<[[u32; 32]; 2]>) -> Box<[[[f64; 32]; 12]; 2]> {
   let mut samples = Box::new([[[0f64; 32]; 12]; 2]);
 
   for sample in 0..12 {
@@ -81,7 +81,7 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num
         let nb = allocations[channel][subband];
 
         samples[channel][sample][subband] = if nb > 0 {
-          calculate_sample(bit_reader, nb as uint) * SCALE_FACTORS_TABLE[scale_factors[channel][subband] as uint]
+          calculate_sample(bit_reader, nb as usize) * SCALE_FACTORS_TABLE[scale_factors[channel][subband] as usize]
         } else {
           0.0
         };
@@ -92,8 +92,8 @@ fn decode_samples(bit_reader: &mut bitreader::BitReader, num_subbands: uint, num
   return samples;
 }
 
-fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: uint) -> f64 {
-  match bit_reader.read_bits(nb) {
+fn calculate_sample(bit_reader: &mut bitreader::BitReader, nb: usize) -> f64 {
+  match bit_reader.read_bits(nb as u32) {
     Ok(s) => {
       let sample = (s as f64) / ((1u64 << nb) as f64) - 0.5;
 
