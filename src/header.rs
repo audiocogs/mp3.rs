@@ -2,8 +2,9 @@
 #![allow(non_uppercase_statics)]
 
 use std::io;
-
 use peeker::Peeker;
+use self::MpegVersion::*;
+use self::MpegLayer::*;
 
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
