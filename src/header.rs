@@ -6,7 +6,7 @@ use peeker::Peeker;
 use self::MpegVersion::*;
 use self::MpegLayer::*;
 
-#[derive(Debug)]
+#[derive(Debug,Clone,Copy)]
 #[allow(non_camel_case_types)]
 pub enum MpegVersion {
   MPEG1_0,
@@ -15,7 +15,7 @@ pub enum MpegVersion {
   MPEGReserved
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,Clone,Copy,PartialEq)]
 pub enum MpegLayer {
   LayerI,
   LayerII,
