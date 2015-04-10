@@ -1,12 +1,13 @@
 use std::os;
 use std::env;
 use std::path::Path;
-use std::old_io;
-use std::old_io::File;
-use std::old_io::Seek;
+use std::io;
+use std::fs::File;
+use std::io::Seek;
 
 #[macro_use]
 extern crate bitflags;
+extern crate byteorder;
 
 mod frame;
 mod header;
@@ -15,11 +16,13 @@ mod bitreader;
 mod layer1;
 
 fn main() {
-  let f = File::open(&Path::new(env::args()[1].clone()));
+  let args: Vec<String> = env::args().collect();
+  let path = Path::new(&args[1]);
+  let f = File::open(&path);
 
   let mut working = true;
   let mut reader = f.unwrap();
-
+/*
   while working {
     working = false;
     match frame::MpegFrame::read_from(&mut reader) {
@@ -35,10 +38,11 @@ fn main() {
           // }
         },
         None => {
-          reader.seek(1, old_io::SeekCur).unwrap();
+          reader.seek(1, io::SeekCur).unwrap();
         }
       },
-      Err(e) =>  if e.kind == old_io::EndOfFile { working = false }
+      Err(e) =>  if e.kind == io::EndOfFile { working = false }
     }
   }
+*/
 }

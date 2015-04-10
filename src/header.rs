@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
 
-use std::old_io;
+use std::io;
+use std::io::SeekFrom;
 use peeker::Peeker;
 use self::MpegVersion::*;
 use self::MpegLayer::*;
@@ -191,12 +192,18 @@ pub struct Header {
 }
 
 impl Header {
-  pub fn read_from(reader: &mut Peeker) -> old_io::IoResult<Option<Header>> {
+  pub fn read_from(reader: &mut Peeker) -> io::Result<Option<Header>> {
     return match reader.peek_be_u32() {
       Ok(v) => match Header::from_binary(&BinaryHeader { bits: v }) {
         Some(s) => {
-          match reader.seek(if s.crc { 6 } else { 4 }, old_io::SeekCur) {
-            Ok(()) => {}, Err(e) => return Err(e)
+          match
+            reader.seek(if s.crc {
+                          SeekFrom::Current(6)
+                        } else {
+                          SeekFrom::Current(4)
+                        })
+          {
+            Ok(_res) => {}, Err(e) => return Err(e)
           };
 
           Ok(Some(s))

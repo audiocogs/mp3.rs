@@ -6,3 +6,4 @@ authors = ["Jens Nockert", "Dimiter Petrov", "Johan Hoffman"]
 
 [dependencies]
 bitflags = "0.1"
+byteorder = "0.3.5"

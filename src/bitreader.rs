@@ -1,17 +1,17 @@
-use std::old_io;
+use std::io;
 
 pub struct BitReader<'a> {
   pub cache: u8,
   pub cache_length: u32,
-  reader: &'a mut (old_io::Reader + 'a)
+  reader: &'a mut (io::Read + 'a)
 }
 
 impl<'a> BitReader<'a> {
-  pub fn new(reader: &'a mut old_io::Reader) -> BitReader<'a> {
+  pub fn new(reader: &'a mut io::Read) -> BitReader<'a> {
     return BitReader { cache: 0, cache_length: 0, reader: reader };
   }
 
-  pub fn read_bits(&mut self, n: u32) -> old_io::IoResult<u32> {
+  pub fn read_bits(&mut self, n: u32) -> io::Result<u32> {
     if n > 32 {
       panic!("You cannot request more than 32 bits into a u32");
     }
@@ -45,7 +45,7 @@ impl<'a> BitReader<'a> {
 #[test]
 fn test_short_reads() {
   let buf = [0xFF, 0xAA, 0x44];
-  let mut br = old_io::BufReader::new(buf);
+  let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
   assert_eq!(r.read_bits(8).unwrap(), 0xFF);
@@ -57,38 +57,38 @@ fn test_short_reads() {
   assert_eq!(r.read_bits(3).unwrap(), 0x01);
   assert_eq!(r.read_bits(2).unwrap(), 0x00);
 
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, old_io::EndOfFile), _ => panic!("Shouldn't be here!") };
+  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
 fn test_medium_reads() {
   let buf = [0xFF, 0xAA, 0x44, 0xA3];
-  let mut br = old_io::BufReader::new(buf);
+  let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
   assert_eq!(r.read_bits(16).unwrap(), 0xFFAA);
   assert_eq!(r.read_bits(12).unwrap(), 0x44A);
   assert_eq!(r.read_bits(4).unwrap(), 0x3);
 
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, old_io::EndOfFile), _ => panic!("Shouldn't be here!") };
+  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
 fn test_large_reads() {
   let buf = [0xFF, 0xAA, 0x44, 0xA3, 0x34, 0x99, 0x44];
-  let mut br = old_io::BufReader::new(buf);
+  let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
   assert_eq!(r.read_bits(24).unwrap(), 0xFFAA44);
   assert_eq!(r.read_bits(32).unwrap(), 0xA3349944);
 
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, old_io::EndOfFile), _ => panic!("Shouldn't be here!") };
+  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
 fn test_stream() {
   let buf = [0xEA, 0xBD, 0x21];
-  let mut br = old_io::BufReader::new(buf);
+  let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
   assert_eq!(r.read_bits(4).unwrap(), 0xE);
@@ -102,7 +102,7 @@ fn test_stream() {
 #[test]
 fn test_stream2() {
   let buf = [0x30, 0xC8, 0x61];
-  let mut br = old_io::BufReader::new(buf);
+  let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
   assert_eq!(r.read_bits(6).unwrap(), 12);
