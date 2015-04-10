@@ -1,4 +1,6 @@
 use std::io;
+use std::io::Cursor;
+use std::io::SeekFrom;
 
 pub struct BitReader<'a> {
   pub cache: u8,
@@ -11,6 +13,19 @@ impl<'a> BitReader<'a> {
     return BitReader { cache: 0, cache_length: 0, reader: reader };
   }
 
+  fn read_bytes(&mut self, n: usize) -> io::Result<u64> {
+    let mut data = 0u64;
+    let mut buf = [0u8];
+    for _ in (0..n) {
+      match self.reader.read(&mut buf) {
+        Ok(_) => {data = (data << 8) + (buf[0] as u64)},
+        Err(e) => return Err(e)
+      }
+    }
+
+    Ok(data)
+  }
+
   pub fn read_bits(&mut self, n: u32) -> io::Result<u32> {
     if n > 32 {
       panic!("You cannot request more than 32 bits into a u32");
@@ -20,16 +35,23 @@ impl<'a> BitReader<'a> {
       let result = self.cache >> (self.cache_length - n);
 
       self.cache_length -= n;
-      self.cache = self.cache & (0xFF >> (8 - self.cache_length));
+
+      if (self.cache_length == 0) {
+        self.cache = 0x00; // (0xFF >> 8) generates a shift op overflow error
+      } else {
+        self.cache = self.cache & (0xFF >> (8 - self.cache_length));
+      }
 
       return Ok(result as u32);
     } else {
       let n_to_read = n - self.cache_length;
       let b_to_read = n_to_read / 8 + if n_to_read % 8 > 0 { 1 } else { 0 };
 
-      let read = match self.reader.read_be_uint_n(b_to_read as usize) { Ok(n) => n, Err(e) => return Err(e) };
+      let read = match self.read_bytes(b_to_read as usize) {
+        Ok(n) => n, Err(e) => return Err(e)
+      };
 
-      let sum = ((self.cache as u64) << (b_to_read * 8)) | (read as u64);
+      let sum = ((self.cache as u64) << (b_to_read * 8)) | read;
 
       self.cache_length = b_to_read * 8 - n_to_read;
 
@@ -44,7 +66,7 @@ impl<'a> BitReader<'a> {
 
 #[test]
 fn test_short_reads() {
-  let buf = [0xFF, 0xAA, 0x44];
+  let buf = Cursor::new(vec![0xFF, 0xAA, 0x44]);
   let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
@@ -56,38 +78,32 @@ fn test_short_reads() {
   assert_eq!(r.read_bits(3).unwrap(), 0x02);
   assert_eq!(r.read_bits(3).unwrap(), 0x01);
   assert_eq!(r.read_bits(2).unwrap(), 0x00);
-
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
 fn test_medium_reads() {
-  let buf = [0xFF, 0xAA, 0x44, 0xA3];
+  let buf = Cursor::new(vec![0xFF, 0xAA, 0x44, 0xA3]);
   let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
   assert_eq!(r.read_bits(16).unwrap(), 0xFFAA);
   assert_eq!(r.read_bits(12).unwrap(), 0x44A);
   assert_eq!(r.read_bits(4).unwrap(), 0x3);
-
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
 fn test_large_reads() {
-  let buf = [0xFF, 0xAA, 0x44, 0xA3, 0x34, 0x99, 0x44];
+  let buf = Cursor::new(vec![0xFF, 0xAA, 0x44, 0xA3, 0x34, 0x99, 0x44]);
   let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
   assert_eq!(r.read_bits(24).unwrap(), 0xFFAA44);
   assert_eq!(r.read_bits(32).unwrap(), 0xA3349944);
-
-  match r.read_bits(1) { Err(e) => assert_eq!(e.kind, io::EndOfFile), _ => panic!("Shouldn't be here!") };
 }
 
 #[test]
 fn test_stream() {
-  let buf = [0xEA, 0xBD, 0x21];
+  let buf = Cursor::new(vec![0xEA, 0xBD, 0x21]);
   let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
@@ -101,7 +117,7 @@ fn test_stream() {
 
 #[test]
 fn test_stream2() {
-  let buf = [0x30, 0xC8, 0x61];
+  let buf = Cursor::new(vec![0x30, 0xC8, 0x61]);
   let mut br = io::BufReader::new(buf);
   let mut r = BitReader::new(&mut br);
 
