@@ -1,12 +1,13 @@
+#[macro_use]
+extern crate bitflags;
+
 use std::os;
 use std::env;
 use std::path::Path;
-use std::old_io;
-use std::old_io::File;
-use std::old_io::Seek;
-
-#[macro_use]
-extern crate bitflags;
+use std::io;
+use std::fs::File;
+use std::io::Seek;
+use std::io::SeekFrom;
 
 mod frame;
 mod header;
@@ -15,16 +16,17 @@ mod bitreader;
 mod layer1;
 
 fn main() {
-  let f = File::open(&Path::new(env::args()[1].clone()));
+  let args: Vec<String> = env::args().collect();
+  let path = Path::new(&args[1]);
+  let f = File::open(&path);
 
-  let mut working = true;
   let mut reader = f.unwrap();
 
-  while working {
-    working = false;
+  loop  {
     match frame::MpegFrame::read_from(&mut reader) {
       Ok(h) => match h {
         Some(h) => {
+          println!("Processing frame...");
           let samples = layer1::decode_layer1(&mut reader, h.header);
           // for i in range(0, 2) {
           //   for j in range(0, 12) {
@@ -35,10 +37,14 @@ fn main() {
           // }
         },
         None => {
-          reader.seek(1, old_io::SeekCur).unwrap();
+          println!("Complete.");
+          break;
         }
       },
-      Err(e) =>  if e.kind == old_io::EndOfFile { working = false }
+      Err(e) => {
+        panic!("Unhandled Error: {}", e);
+      },
     }
   }
+
 }
