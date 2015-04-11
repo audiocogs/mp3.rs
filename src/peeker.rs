@@ -9,10 +9,10 @@ pub trait Peeker : io::Seek + io::Read {
 impl<T: io::Read + io::Seek> Peeker for T {
   fn peek_be_u32(&mut self) -> io::Result<u32> {
     let mut buf = [0u8; 4];
-    let result = match self.read(&mut buf) {
-                   Ok(_) => {},
-                   Err(e) => return Err(e),
-                 };
+    match self.read(&mut buf) {
+        Ok(_) => {},
+        Err(e) => return Err(e),
+    };
 
     match self.seek(SeekFrom::Current(-4)) {
       Ok(_) => {}, Err(e) => return Err(e)

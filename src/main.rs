@@ -1,13 +1,9 @@
 #[macro_use]
 extern crate bitflags;
 
-use std::os;
 use std::env;
 use std::path::Path;
-use std::io;
 use std::fs::File;
-use std::io::Seek;
-use std::io::SeekFrom;
 
 mod frame;
 mod header;

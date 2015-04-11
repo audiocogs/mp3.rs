@@ -36,7 +36,7 @@ impl<'a> BitReader<'a> {
 
       self.cache_length -= n;
 
-      if (self.cache_length == 0) {
+      if self.cache_length == 0 {
         self.cache = 0x00; // (0xFF >> 8) generates a shift op overflow error
       } else {
         self.cache = self.cache & (0xFF >> (8 - self.cache_length));
