@@ -1,4 +1,5 @@
 use std::io;
+use std::io::Seek;
 use std::io::Cursor;
 use std::io::SeekFrom;
 
@@ -10,8 +11,8 @@ impl<T: io::Read + io::Seek> Peeker for T {
   fn peek_be_u32(&mut self) -> io::Result<u32> {
     let mut buf = [0u8; 4];
     match self.read(&mut buf) {
-        Ok(_) => {},
-        Err(e) => return Err(e),
+      Ok(_) => {},
+      Err(e) => return Err(e),
     };
 
     match self.seek(SeekFrom::Current(-4)) {
@@ -26,21 +27,18 @@ impl<T: io::Read + io::Seek> Peeker for T {
   }
 }
 
-fn peek_u32<T: io::Read + io::Seek>(p: &mut T) -> io::Result<u32> {
-  p.peek_be_u32()
-}
-
 #[test]
 fn test_peek_in_small_buf() {
-  let mut buf = Cursor::new(vec![0xFF, 0xAA, 0x44, 0xA3]);
-  assert_eq!(peek_u32(&mut buf).unwrap(), 0xFFAA44A3);
-  assert_eq!(peek_u32(&mut buf).unwrap(), 0xFFAA44A3);
+  let mut buf = Cursor::new(vec![0xFFu8, 0xAA, 0x44, 0xA3]);
+  let mut pkr = Box::new(buf) as Box<Peeker>;
+  assert_eq!(pkr.peek_be_u32().unwrap(), 0xFFAA44A3);
+  assert_eq!(pkr.peek_be_u32().unwrap(), 0xFFAA44A3);
 }
 
 #[test]
 fn test_peek_in_medium_buf() {
-  let mut buf = Cursor::new(vec![0xFF, 0xAA, 0x44, 0xA3, 0x34, 0x99, 0x44]);
-
-  assert_eq!(peek_u32(&mut buf).unwrap(), 0xFFAA44A3);
-  assert_eq!(peek_u32(&mut buf).unwrap(), 0xFFAA44A3);
+  let mut buf = Cursor::new(vec![0xFFu8, 0xAA, 0x44, 0xA3, 0x34, 0x99, 0x44]);
+  let mut pkr = Box::new(buf) as Box<Peeker>;
+  assert_eq!(pkr.peek_be_u32().unwrap(), 0xFFAA44A3);
+  assert_eq!(pkr.peek_be_u32().unwrap(), 0xFFAA44A3);
 }
