@@ -1,5 +1,3 @@
-use std::io;
-use std::io::Cursor;
 use std::fs;
 
 use bitreader;

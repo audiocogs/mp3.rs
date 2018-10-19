@@ -23,7 +23,7 @@ fn main() {
       Ok(h) => match h {
         Some(h) => {
           println!("Processing frame...");
-          let samples = layer1::decode_layer1(&mut reader, h.header);
+          let _samples = layer1::decode_layer1(&mut reader, h.header);
           // for i in range(0, 2) {
           //   for j in range(0, 12) {
           //     for k in range(0, 32) {

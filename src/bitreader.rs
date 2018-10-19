@@ -1,6 +1,4 @@
 use std::io;
-use std::io::Cursor;
-use std::io::SeekFrom;
 
 pub struct BitReader<'a> {
   pub cache: u8,
@@ -16,7 +14,7 @@ impl<'a> BitReader<'a> {
   fn read_bytes(&mut self, n: usize) -> io::Result<u64> {
     let mut data = 0u64;
     let mut buf = [0u8];
-    for _ in (0..n) {
+    for _ in 0..n {
       match self.reader.read(&mut buf) {
         Ok(_) => {data = (data << 8) + (buf[0] as u64)},
         Err(e) => return Err(e)

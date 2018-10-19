@@ -1,6 +1,4 @@
 use std::io;
-use std::io::Seek;
-use std::io::Cursor;
 use std::io::SeekFrom;
 
 pub trait Peeker : io::Seek + io::Read {
